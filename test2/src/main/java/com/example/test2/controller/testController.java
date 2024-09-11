@@ -27,8 +27,9 @@ public class testController {
     private AddressRepository addressRepository;
 
     //    메인 화면 이동
-    @GetMapping("/weather")
-    public String weather(HttpSession session, Model model) {
+    @CrossOrigin(origins = "http://localhost:9098") // 프록시 서버 url
+    @GetMapping("/api/weather")
+    public String weather() {
         return "weathertest";
     }
 

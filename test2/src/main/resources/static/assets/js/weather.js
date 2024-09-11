@@ -1,3 +1,13 @@
+//var express = require('express');
+//var app = express();
+//
+//app.use((req, res, next) => {
+//  res.header('Access-Control-Allow-Origin', '*'); // 모든 도메인 허용
+//  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // 허용할 메소드 지정
+//  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // 허용할 헤더 지정
+//  next();
+//});
+
 // 초단기기상예보 json 파일 받기
 // https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtFcst?pageNo=1&numOfRows=1000&dataType=XML&base_date=20210628&base_time=0630&nx=55&ny=127&authKey=4xxl_HhFRSScZfx4RWUkCw
 // https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst?pageNo=1&numOfRows=1000&dataType=Json&base_date=20240909&base_time=2000&nx=61&ny=126&authKey=4xxl_HhFRSScZfx4RWUkCw
@@ -25,7 +35,16 @@ function getCurrentDateTime(){
     var hours = String(today.getHours()).padStart(2,'0');
     var minutes = String(today.getMinutes()).padStart(2,'0')
 
-    var base_time = `${hours}00`;
+//    var base_time = `${hours}00`;
+    // Determine base_time based on the minutes
+    if (today.getMinutes() < 30) {
+      // Subtract 1 hour and ensure it's formatted correctly
+      var adjustedHours = String((today.getHours() === 0 ? 23 : today.getHours() - 1)).padStart(2, '0');
+      base_time = `${adjustedHours}30`;
+    } else {
+      // Use the current hour
+      base_time = `${hours}00`;
+    }
 
     return {
         base_date: `${year}${month}${day}`,
@@ -37,24 +56,21 @@ function getCurrentDateTime(){
  async function fetchWeatherDate() {
     var { base_date, base_time } = getCurrentDateTime();
 
-    var url = `${API_URL}?pageNo=1&numofRows=1000&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}&authKey=${API_KEY}`;
+    var url = `${API_URL}?pageNo=1&numOfRows=1000&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}&authKey=${API_KEY}`;
 
     try{
         var response = await fetch(url);
-         if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-         }
+        if(!response.ok){
+            throw new Error('HTTP error!: ');
+        }
         var data = await response.json();
-        processWeatherData(data);
-    } catch(error){
-
-        console.error('날씨 정보를 불러오는데 실패!', error);
-    }
+        processWeatherData(data)
+        }
 }
 
 function processWeatherData(data){
     try {
-        var items = data?.response?.body?.items?.item;
+        var items = data.response.body.items.item;
 
         // 데이터가 없을 때 오류 메시지
         if (!items){
